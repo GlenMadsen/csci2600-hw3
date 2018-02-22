@@ -485,11 +485,11 @@ public final class RatPoly {
     	return r;
     }
 
-	public RatPoly div(RatPoly p) 
+	public RatPoly div(RatPoly p) // Division function
 	{
 		// TODO Auto-generated method stub
 		checkRep();
-		if(p.equals(ZERO))
+		if(p.equals(ZERO)) // Numerous checks involving NaNs or zeros
 		{
 			return RatPoly.NaN;
 		}
@@ -501,39 +501,39 @@ public final class RatPoly {
 		{
 			return RatPoly.ZERO;
 		}
-		int deg = this.degree()-p.degree();
-		if(deg < 0)
+		int deg = this.degree()-p.degree(); // Finds the initial degree, if one is initially bigger return 0
+		if(deg < 0) // if it is the denominator.
 		{
 			return RatPoly.ZERO;
 		}
-		RatNum[] q = new RatNum[deg+1];
-		for(int i = 0; i < q.length; i++)
+		RatNum[] q = new RatNum[deg+1]; // creates an array for the quotient of a specific size based on deg
+		for(int i = 0; i < q.length; i++) // fills it with zeros
 		{
 			q[i] = RatNum.ZERO;
 		}
-		RatNum[] temp_pc= p.coeffs.clone();
+		RatNum[] temp_pc= p.coeffs.clone(); // I create a bunch of helper Polynomials and arrays
 		RatPoly temp_p = new RatPoly(temp_pc);
 		RatNum[] temp_thisc = this.coeffs.clone();
 		RatPoly temp_this = new RatPoly(temp_thisc);
 		RatNum[] temp;
-		for(int i = 0; i < this.degree()+1; i++)
-		{
+		for(int i = 0; i < this.degree()+1; i++) //iterates through every degree of object being divided,
+		{ // which would be max number of times
 			temp_pc = p.coeffs.clone();
 			temp_p = new RatPoly(temp_pc);
-			if(deg < 0)
+			if(deg < 0) // if deg is less than 0, it halts
 			{
 				break;
 			}
-			if(deg == 0)
+			if(deg == 0) // if the degree is zero is adds the last element in then halts
 			{
 				q[0] = temp_this.coeffs[temp_this.degree()].div(temp_p.coeffs[temp_p.degree()]);
-				deg = -2;
+				deg = -2; // redundant
 				break;
-			}
+			}  // finds the coefficient of the highest powers
 			q[deg] = temp_this.coeffs[temp_this.degree()].div(temp_p.coeffs[temp_p.degree()]);
-			RatPoly.scaleCoeff(temp_pc, q[deg]);
-			temp = new RatNum[temp_pc.length+deg];
-			for(int j = 0; j < temp.length; j++)
+			RatPoly.scaleCoeff(temp_pc, q[deg]); // scales the coefficients to be the same
+			temp = new RatNum[temp_pc.length+deg]; // creates a new array and scales up p so it can be
+			for(int j = 0; j < temp.length; j++) // subtracted (essentially multiplying x^deg
 			{
 				temp[j] = RatNum.ZERO;
 			}
@@ -541,19 +541,19 @@ public final class RatPoly {
 			{
 				temp[j+deg] = temp_pc[j];
 			}
-			temp_p = new RatPoly(temp);
-			if(temp_this.sub(temp_p).equals(ZERO))
+			temp_p = new RatPoly(temp); 
+			if(temp_this.sub(temp_p).equals(ZERO)) // if they are equal returns q as is instead of subbing
 			{
 				return new RatPoly(q);
 			}
-			else
-			{
+			else // Otherwise it subtracts, resets p to a nonscaled version, and finds the new degree,
+			{ // leaving temp_this altered so the division can make progress
 				temp_this = new RatPoly(temp_this.sub(temp_p).coeffs);
 				temp_p = new RatPoly(p.coeffs.clone());
 				deg = temp_this.degree() - temp_p.degree();
 			}
 		}
-		checkRep();
+		checkRep(); // checks rep and returns the resulting quotient polynomial
 		return new RatPoly(q);
 	}
     /**
