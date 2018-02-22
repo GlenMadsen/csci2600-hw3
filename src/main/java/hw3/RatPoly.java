@@ -67,7 +67,30 @@ public final class RatPoly {
      */
     public RatPoly(int c, int e) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly constructor is not yet implemented");    	
+    	if (c == 0) // constructs a "0" polynomial as indicated
+    	{
+    		coeffs = new RatNum[0];
+    		degree = 0;
+    	}
+    	else // Otherwise creates an array of size e+1 full of zeroes except for c (as a RatNum) at the end
+    	{
+    		coeffs = new RatNum[e+1];
+    		for(int i = 0; i < e+1; i++)
+    		{
+    			if (i == e)
+    			{
+    				RatNum coe = new RatNum(c);
+    				coeffs[i] = coe;
+    			}
+    			else
+    			{
+    				RatNum coe = RatNum.ZERO;
+    				coeffs[i] = coe;
+    			}
+    		}
+    		degree = e; // Sets degree equal to the highest degree, or e.
+    	}
+    	checkRep();  // Ensures structure representation is being followed.
     }
 
     
@@ -94,7 +117,22 @@ public final class RatPoly {
      */
     public int degree() {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.degree() is not yet implemented");    	
+    	checkRep(); // Checks representation on entry and makes sure it is not null, if so returns 0
+    	if (!this.isNaN())
+    	{
+    		int coe = coeffs.length; // Returns length-1 or 0, whichever is bigger.
+    		if (coe == 0)
+    		{
+    			checkRep();
+    			return 0;
+    		}
+    		return coeffs.length-1; 
+    	}
+    	else
+    	{
+    		checkRep();
+    		return 0;
+    	}
     }
 
     /**
@@ -107,7 +145,22 @@ public final class RatPoly {
      */
     public RatNum getCoeff(int pow) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.getCoeff() is not yet implemented");
+    	checkRep();
+    	if (!this.isNaN()) // checks if pow is a valid power then returns the coefficient in that location
+    	{
+    		if(pow < 0 || pow >= coeffs.length)
+    		{
+    			checkRep();
+    			return RatNum.ZERO;
+    		}
+    		checkRep();
+    		return coeffs[pow];
+    	}
+    	else
+    	{
+    		checkRep();
+    		return RatNum.ZERO;
+    	}
     }
 
     /**
@@ -117,7 +170,18 @@ public final class RatPoly {
      */
     public boolean isNaN() {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.isNaN() is not yet implemented");    	
+    	checkRep();
+    	for(int i = 0; i < coeffs.length; i++) // checks if any individual element isNaN using the RaTNum
+    	{ // check available, if so returns true.
+    		if(coeffs[i].isNaN())
+    		{
+    			checkRep();
+    			return coeffs[i].isNaN();
+    		}
+    	}
+    	checkRep();
+    	return false;
+       // throw new RuntimeException("RatPoly.isNaN() is not yet implemented");    	
     }
 
         
@@ -133,7 +197,13 @@ public final class RatPoly {
      */
     private static void scaleCoeff(RatNum[] arr, RatNum scalar) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.scaleCoeff() is not yet implemented");
+    	for(int i = 0; i < arr.length; i++) // Changes the arrary to have every non NaN element multiplied
+    	{ // by the scalar. Because it is a helper function no need to check Rep
+    		if(!(arr[i].isNaN()))
+    		{
+    			arr[i] = scalar.mul(arr[i]);
+    		}
+    	}
     }
 
 
@@ -145,7 +215,27 @@ public final class RatPoly {
      */
     public RatPoly negate() {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly->negate() is not yet implemented");
+    	checkRep();
+    	if(this.isNaN()) // Returns this (this is NaN) if it is NaN, zero if it is zero
+    	{
+    		return this;
+    	}
+    	if(this.equals(ZERO))
+    	{
+    		return ZERO;
+    	}
+    	else // Otherwise it takes a clone (new copy) then finds the negation with sub, checks rep, returns
+    	{
+			RatNum zero = new RatNum(0);
+			RatNum[] newcoe = this.coeffs.clone();
+			RatPoly coeffspost = new RatPoly(newcoe);
+    		for(int i = 0; i < coeffs.length; i++)
+    		{
+    			coeffspost.coeffs[i] = zero.sub(coeffspost.coeffs[i]);
+    		}
+    		coeffspost.checkRep();
+    		return coeffspost;
+    	}
     }
 
     /**
@@ -158,7 +248,68 @@ public final class RatPoly {
      */
     public RatPoly add(RatPoly p) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.add() is not yet implemented");
+    	checkRep();
+    	if(this.isNaN()) // If either is NaN, returns that one, if either is zero, returns the other
+    	{
+    		return this;
+    	}
+    	if(p.isNaN())
+    	{
+    		return p;
+    	}
+    	if(this.equals(ZERO))
+    	{
+    		return p;
+    	}
+    	if(p.equals(ZERO))
+    	{
+    		return this;
+    	}
+    	else // Takes whichever polynomial has a higher degree and adds the other one to it, so
+    	{ // there is no need to add more to the end. Then takes a new copy of the longer one and 
+    		if(p.degree() > this.degree()) // adds everything to it, if things get reduced to zero it checks
+    		{ // and changes the return as needed.
+    			int num_of_z = 0;
+    			RatNum[] newcoe = p.coeffs.clone();
+    			RatPoly r = new RatPoly(newcoe);
+    			for(int i = 0; i < this.degree()+1; i++)
+    			{
+    				r.coeffs[i] = coeffs[i].add(p.getCoeff(i));
+    				if (r.coeffs[i].equals(RatNum.ZERO))
+    				{
+    					num_of_z+= 1;
+    				}
+    			}
+    			if(num_of_z == p.degree()+1)
+    			{
+    				r = new RatPoly();
+    				return r;
+    			}
+    	    	r.checkRep();
+    			return r;
+    		}
+    		else // The same but using the other polynomial as a base
+    		{
+    			int num_of_z = 0;
+    			RatNum[] newcoe = this.coeffs.clone();
+    			RatPoly r = new RatPoly(newcoe);
+    			for(int i = 0; i < p.degree()+1; i++)
+    			{
+    				r.coeffs[i] = coeffs[i].add(p.getCoeff(i));
+    				if (r.coeffs[i].equals(RatNum.ZERO))
+    				{
+    					num_of_z+= 1;
+    				}
+    			}
+    			if(num_of_z == p.degree()+1)
+    			{
+    				r = new RatPoly();
+    				return r;
+    			}
+    	    	r.checkRep();
+    			return r;
+    		}
+    	}
     }
     
     /**
@@ -169,9 +320,124 @@ public final class RatPoly {
      * @return a RatPoly, r, such that r = "this - p"; if this.isNaN() or
      *         p.isNaN(), returns some r such that r.isNaN()
      */
-    public RatPoly sub(RatPoly p) {
+    public RatPoly sub(RatPoly p) { // The same as add but subtracting instead of adding, RatNum's .sub
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly->sub() is not yet implemented");
+    	checkRep();
+		RatNum zero = new RatNum(0); // The only real big difference is the active removal of trailing 
+		RatPoly zeroo = new RatPoly(); // zeros necessary to ensure that the div. operation works. 
+    	if(this.isNaN()) 
+    	{
+    		return this;
+    	}
+    	if(p.isNaN())
+    	{
+    		return p;
+    	}
+    	if(this.equals(zeroo)) // Returns the negation if the other side if zero, vica versa
+    	{
+    		return p.negate();
+    	}
+    	if(p.equals(zeroo))
+    	{
+    		return this;
+    	}
+    	if(this.equals(p)) // Returns the 0 polynomial if this and p are the same polynomial
+    	{
+    		return new RatPoly();
+    	}
+    	else
+    	{
+    		if(p.degree() > this.degree())
+    		{
+    			int num_of_z = 0;
+    			RatNum[] newcoe = p.coeffs.clone();
+    			RatPoly r = new RatPoly(newcoe);
+    			for(int i = 0; i < this.degree()+1; i++)
+    			{
+    				r.coeffs[i] = coeffs[i].sub(p.getCoeff(i));
+    				if (r.coeffs[i].equals(zero))
+    				{
+    					num_of_z+= 1;
+    				}
+    			}
+    			if(num_of_z == p.degree()+1)
+    			{
+    				r = new RatPoly();
+    				r.checkRep();
+    				return r;
+    			}
+    			
+    			int trailing_z = 0;
+    			for(int i = r.coeffs.length-1; i >= 0; i--)
+    			{
+    				if(r.coeffs[i].equals(RatNum.ZERO))
+    				{
+    					trailing_z += 1;
+    				}
+    				else
+    				{
+    					break;
+    				}
+    			}
+    			if(trailing_z != 0)
+    			{
+    				RatNum[] fixed = new RatNum[r.coeffs.length-trailing_z];
+    				for(int i = 0; i < p.degree()+1-trailing_z;i++)
+        			{
+        				fixed[i] = r.coeffs[i];
+        			}
+    				r = new RatPoly(fixed);
+    			}
+    			r.checkRep();
+    			return r;
+    		}
+    		else
+    		{
+    			int num_of_z = 0;
+    			RatNum[] newcoe = this.coeffs.clone();
+    			RatPoly r = new RatPoly(newcoe);
+    			for(int i = 0; i < p.degree()+1; i++)
+    			{
+    				if(i < this.degree() + 1)
+    				{
+    					r.coeffs[i] = coeffs[i].sub(p.getCoeff(i));
+    					if (r.coeffs[i].equals(zero))
+        				{
+        					num_of_z+= 1;
+        				}
+    				}
+    			}
+    			if(num_of_z == p.degree()+1)
+    			{
+    				r = new RatPoly();
+    				r.checkRep();
+    				return r;
+    			}
+    			int trailing_z = 0; // Checks for and removes trailing zeros
+    			for(int i = r.coeffs.length-1; i >= 0; i--)
+    			{
+    				if(r.coeffs[i].equals(RatNum.ZERO))
+    				{
+    					trailing_z += 1;
+    				}
+    				else
+    				{
+    					break;
+    				}
+    			}
+    			if(trailing_z != 0)
+    			{
+    				RatNum[] fixed = new RatNum[r.coeffs.length-trailing_z];
+    				for(int i = 0; i < p.degree()+1-trailing_z;i++)
+        			{
+        				fixed[i] = r.coeffs[i];
+        			}
+    				r = new RatPoly(fixed);
+    			}
+    			r.checkRep();
+    			return r;
+    		}
+    	}
     }
 
     /**
@@ -184,9 +450,112 @@ public final class RatPoly {
      */
     public RatPoly mul(RatPoly p) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly->mul() is not yet implemented");
+    	checkRep();
+    	if(this.isNaN()) // Checks rep, then if anything is NaN, then if anything is zero and returns that
+    	{
+    		return this;
+    	}
+    	if(p.isNaN())
+    	{
+    		return p;
+    	}
+    	if(this.equals(ZERO) || p.equals(ZERO))
+    	{
+    		RatPoly r = new RatPoly();
+    		r.checkRep();
+    		return r;
+    	}
+		RatNum[] newcoeffs = new RatNum[this.degree()+p.degree()+1]; // Otherwise it creates a RatNum array
+		for(int i = 0; i < newcoeffs.length; i++) // of appropriate length, also a temp array clone of p.
+		{
+			newcoeffs[i] = RatNum.ZERO;
+		}
+		RatNum[] temp;
+    	for(int i = 0; i < this.coeffs.length; i++) // uses the temp array to be scalar'd by every element
+    	{ // in this.coeff, then adding the array to the base sum, getting the multiplication done.
+			temp = p.coeffs.clone();
+    		RatPoly.scaleCoeff(temp, this.coeffs[i]);
+    		for(int j = 0; j < temp.length; j++)
+    		{
+    			newcoeffs[j + i] = newcoeffs[j + i].add(temp[j]); 
+    		}
+    	}
+    	RatPoly r = new RatPoly(newcoeffs); // After its been summed up, creates a polynomial and checks rep
+    	r.checkRep();
+    	return r;
     }
 
+	public RatPoly div(RatPoly p) 
+	{
+		// TODO Auto-generated method stub
+		checkRep();
+		if(p.equals(ZERO))
+		{
+			return RatPoly.NaN;
+		}
+		if(this.isNaN() || p.isNaN())
+		{
+			return RatPoly.NaN;
+		}
+		if(this.equals(ZERO))
+		{
+			return RatPoly.ZERO;
+		}
+		int deg = this.degree()-p.degree();
+		if(deg < 0)
+		{
+			return RatPoly.ZERO;
+		}
+		RatNum[] q = new RatNum[deg+1];
+		for(int i = 0; i < q.length; i++)
+		{
+			q[i] = RatNum.ZERO;
+		}
+		RatNum[] temp_pc= p.coeffs.clone();
+		RatPoly temp_p = new RatPoly(temp_pc);
+		RatNum[] temp_thisc = this.coeffs.clone();
+		RatPoly temp_this = new RatPoly(temp_thisc);
+		RatNum[] temp;
+		for(int i = 0; i < this.degree()+1; i++)
+		{
+			temp_pc = p.coeffs.clone();
+			temp_p = new RatPoly(temp_pc);
+			if(deg < 0)
+			{
+				break;
+			}
+			if(deg == 0)
+			{
+				q[0] = temp_this.coeffs[temp_this.degree()].div(temp_p.coeffs[temp_p.degree()]);
+				deg = -2;
+				break;
+			}
+			q[deg] = temp_this.coeffs[temp_this.degree()].div(temp_p.coeffs[temp_p.degree()]);
+			RatPoly.scaleCoeff(temp_pc, q[deg]);
+			temp = new RatNum[temp_pc.length+deg];
+			for(int j = 0; j < temp.length; j++)
+			{
+				temp[j] = RatNum.ZERO;
+			}
+			for(int j = 0; j < temp_pc.length; j++)
+			{
+				temp[j+deg] = temp_pc[j];
+			}
+			temp_p = new RatPoly(temp);
+			if(temp_this.sub(temp_p).equals(ZERO))
+			{
+				return new RatPoly(q);
+			}
+			else
+			{
+				temp_this = new RatPoly(temp_this.sub(temp_p).coeffs);
+				temp_p = new RatPoly(p.coeffs.clone());
+				deg = temp_this.degree() - temp_p.degree();
+			}
+		}
+		checkRep();
+		return new RatPoly(q);
+	}
     /**
      * Returns the value of this RatPoly, evaluated at d. Evaluate using Horner's
      * rule as you did in Homework 2.
@@ -196,9 +565,24 @@ public final class RatPoly {
      *         "x+2" evaluated at 3 is 5, and "x^2-x+1" evaluated at 3 is 7. if
      *         (this.isNaN() == true), return RatNum.NaN
      */
-    public double eval(double d) {
+    public double eval(double d) { // Checks rep, then returns NaN if NaN or coeffs[0] if length 1.
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.eval() is not yet implemented");
+    	checkRep();
+    	if(this.isNaN())
+    	{
+    		return Double.NaN;
+    	}
+    	if(this.coeffs.length == 1)
+    	{
+    		return coeffs[0].doubleValue();
+    	}
+    	double sum = 0;
+    	for(int i = 1; i < coeffs.length+1; i++) // Otherwise it sums using Horner's rule then returns sum.
+    	{
+    		sum = sum*d;
+    		sum += coeffs[coeffs.length-i].doubleValue();
+    	}
+    	return sum;
     }  
     
     
@@ -214,7 +598,27 @@ public final class RatPoly {
      */
     public RatPoly differentiate() {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.differentiate() is not yet implemented");
+    	checkRep();
+    	if(this.isNaN()) // Checks rep, returns NaN if NaN, and returns 0 polynomial if degree and poly is 0
+    	{
+    		return this;
+    	}
+    	if(this.degree() == 0 || this == ZERO)
+    	{
+    		return new RatPoly();
+    	}
+    	else // Otherwise I create an array, alter is using the coeffs and the power rule of differentiation
+    	{
+    		RatNum[] newcoeffs = new RatNum[this.degree()];
+        	for(int i = 1; i < this.coeffs.length; i++)
+        	{
+        		RatNum temp = new RatNum(i);
+        		newcoeffs[i-1] = this.coeffs[i].mul(temp);
+        	}
+        	RatPoly q = new RatPoly(newcoeffs); // Then with the completed array I check rep and return
+        	q.checkRep();
+        	return q;
+    	}
     }
 
     /**
@@ -235,8 +639,32 @@ public final class RatPoly {
      */
     public RatPoly antiDifferentiate(RatNum integrationConstant) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException(
-                "RatPoly->antiDifferentiate() unimplemented!");
+    	checkRep(); // The same idea as differentiation but inverted and with more base cases for an 
+    	if(this.isNaN()) // empty or nearly empty polynomial, the loop is nearly the same as before.
+    	{
+    		return this;
+    	}
+    	if(this == ZERO && integrationConstant == RatNum.ZERO)
+    	{
+    		return new RatPoly();
+    	}
+    	if(this == ZERO && integrationConstant != RatNum.ZERO)
+    	{
+    		return new RatPoly(integrationConstant.intValue(),0);
+    	}
+    	else
+    	{
+    		RatNum[] newcoeffs = new RatNum[this.degree()+2];
+			newcoeffs[0] = integrationConstant;
+        	for(int i = 0; i < this.coeffs.length; i++)
+        	{
+        		RatNum temp = new RatNum(i+1);
+        		newcoeffs[i+1] = this.coeffs[i].div(temp);
+        	}
+        	RatPoly q = new RatPoly(newcoeffs); // Then I still check rep and return the completed array
+        	q.checkRep();
+        	return q;
+    	}
     }
 
     /**
@@ -257,7 +685,15 @@ public final class RatPoly {
      */
     public double integrate(double lowerBound, double upperBound) {
         // TODO: Fill in this method, then remove the RuntimeException
-        throw new RuntimeException("RatPoly.integrate() is not yet implemented");
+    	checkRep(); // I check rep then return NaN if NaN, and call differentiate and eval functions to 
+    	if(this.isNaN() || Double.isNaN(lowerBound) || Double.isNaN(upperBound)) // determine the integral. 
+    	{
+    		return Double.NaN;
+    	}
+    	RatNum temp = new RatNum(0);
+    	RatPoly i = this.antiDifferentiate(temp);
+    	checkRep(); // Check rep just in case.
+    	return i.eval(upperBound)-i.eval(lowerBound);
     }
 
     
@@ -498,4 +934,5 @@ public final class RatPoly {
 		    }
         }
     }
+
 }
